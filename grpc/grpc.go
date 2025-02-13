@@ -1,23 +1,35 @@
 package grpc
 
 import (
+	"context"
+	"fmt"
+	"log"
+	"net"
+	"os"
+
+	"github.com/charitan-go/key-server/internal/key/service"
 	"github.com/charitan-go/key-server/pkg/proto"
+	consulapi "github.com/hashicorp/consul/api"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 type GrpcServer struct {
 	proto.UnimplementedKeyGrpcServiceServer
-	donorSvc   donorservice.DonorService
+	keySvc     service.KeyService
 	grpcServer *grpc.Server
 }
 
-func NewGrpcServer(donorSvc donorservice.DonorService) *GrpcServer {
+func NewGrpcServer(keySvc service.KeyService) *GrpcServer {
 	grpcServer := grpc.NewServer()
-	profileGrpcServer := &GrpcServer{}
+	keyGrpcServer := &GrpcServer{}
 
-	proto.RegisterProfileGrpcServiceServer(grpcServer, profileGrpcServer)
-	profileGrpcServer.donorSvc = donorSvc
-	profileGrpcServer.grpcServer = grpcServer
+	proto.RegisterKeyGrpcServiceServer(grpcServer, keyGrpcServer)
+	keyGrpcServer.keySvc = keySvc
+	keyGrpcServer.grpcServer = grpcServer
+
+	// Init get key and gen key
 
 	address := os.Getenv("SERVICE_ID")
 	grpcServiceName := fmt.Sprintf("%s-grpc", address)
@@ -25,7 +37,7 @@ func NewGrpcServer(donorSvc donorservice.DonorService) *GrpcServer {
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 	healthServer.SetServingStatus(grpcServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
 
-	return profileGrpcServer
+	return keyGrpcServer
 }
 
 func (*GrpcServer) setupServiceRegistry() {
@@ -63,11 +75,11 @@ func (*GrpcServer) setupServiceRegistry() {
 	}
 }
 
-func (s *GrpcServer) CreateDonorProfile(
+func (s *GrpcServer) GetPrivateKey(
 	ctx context.Context,
-	reqDto *proto.CreateDonorProfileRequestDto,
-) (*proto.CreateDonorProfileResponseDto, error) {
-	resDto, err := s.donorSvc.CreateDonorProfile(reqDto)
+	reqDto *proto.GetPrivateKeyRequestDto,
+) (*proto.GetPrivateKeyResponseDto, error) {
+	resDto, err := s.keySvc.GetPrivateKey(reqDto)
 	return resDto, err
 }
 
