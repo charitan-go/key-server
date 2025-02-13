@@ -27,7 +27,7 @@ func (svc *keyServiceImpl) GetPrivateKey(reqDto *proto.GetPrivateKeyRequestDto) 
 
 func (svc *keyServiceImpl) NotiGetPrivateKey() {
 	// Connect to RabbitMQ
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	conn, err := amqp.Dial("amqp://rabbitmq:secret@message-broker:5672/")
 	if err != nil {
 		log.Fatalf("Failed to connect to RabbitMQ %v", err)
 	}
