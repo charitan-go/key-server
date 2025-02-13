@@ -4,6 +4,7 @@ go 1.23.6
 
 require (
 	github.com/hashicorp/consul/api v1.31.0
+	github.com/rabbitmq/amqp091-go v1.10.0
 	go.uber.org/fx v1.23.0
 	google.golang.org/grpc v1.70.0
 	google.golang.org/protobuf v1.35.2

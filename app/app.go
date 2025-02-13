@@ -3,6 +3,7 @@ package app
 import (
 	"log"
 
+	"github.com/charitan-go/key-server/external/auth"
 	"github.com/charitan-go/key-server/grpc"
 	"github.com/charitan-go/key-server/internal/key"
 	"go.uber.org/fx"
@@ -23,6 +24,7 @@ func Run() {
 
 	fx.New(
 		key.KeyModule,
+		auth.AuthModule,
 		fx.Provide(
 			grpc.NewGrpcServer,
 		),

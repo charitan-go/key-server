@@ -5,7 +5,7 @@ import (
 	"go.uber.org/fx"
 )
 
-var KeyModule = fx.Module("donor",
+var KeyModule = fx.Module("key",
 	fx.Provide(
 		service.NewKeyService,
 	),
