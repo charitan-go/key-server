@@ -38,6 +38,8 @@ func NewGrpcServer(keySvc service.KeyService) *GrpcServer {
 
 	address := os.Getenv("SERVICE_ID")
 	grpcServiceName := fmt.Sprintf("%s-grpc", address)
+
+	// Setup health server
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 	healthServer.SetServingStatus(grpcServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
@@ -80,14 +82,6 @@ func (*GrpcServer) setupServiceRegistry() {
 	}
 }
 
-func (s *GrpcServer) GetPrivateKey(
-	ctx context.Context,
-	reqDto *proto.GetPrivateKeyRequestDto,
-) (*proto.GetPrivateKeyResponseDto, error) {
-	resDto, err := s.keySvc.GetPrivateKeyGrpcHandler(reqDto)
-	return resDto, err
-}
-
 func (s *GrpcServer) Run() {
 	s.setupServiceRegistry()
 	log.Println("Setup service registry for grpc service ok")
@@ -106,4 +100,12 @@ func (s *GrpcServer) Run() {
 	// Generate key pairs
 	s.keySvc.GenerateKeyPairs()
 
+}
+
+func (s *GrpcServer) GetPrivateKey(
+	ctx context.Context,
+	reqDto *proto.GetPrivateKeyRequestDto,
+) (*proto.GetPrivateKeyResponseDto, error) {
+	resDto, err := s.keySvc.GetPrivateKeyGrpcHandler(reqDto)
+	return resDto, err
 }

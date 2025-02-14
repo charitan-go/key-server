@@ -6,6 +6,6 @@ import (
 
 var AuthModule = fx.Module("auth",
 	fx.Provide(
-		NewAuthRabbitMQProducer,
+		NewAuthRabbitmqProducer,
 	),
 )

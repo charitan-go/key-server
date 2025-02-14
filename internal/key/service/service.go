@@ -24,11 +24,11 @@ type KeyService interface {
 type keyServiceImpl struct {
 	privateKey           *rsa.PrivateKey
 	publicKey            *rsa.PublicKey
-	authRabbitMQProducer auth.AuthRabbitMQProducer
+	authRabbitmqProducer auth.AuthRabbitmqProducer
 }
 
-func NewKeyService(authRabbitMQProducer auth.AuthRabbitMQProducer) KeyService {
-	return &keyServiceImpl{nil, nil, authRabbitMQProducer}
+func NewKeyService(authRabbitmqProducer auth.AuthRabbitmqProducer) KeyService {
+	return &keyServiceImpl{nil, nil, authRabbitmqProducer}
 }
 
 func (svc *keyServiceImpl) getPrivateKeyStr() string {
@@ -61,7 +61,7 @@ func (svc *keyServiceImpl) GenerateKeyPairs() error {
 	svc.publicKey = &privateKey.PublicKey
 
 	// Send noti to auth server for get key pairs
-	err = svc.authRabbitMQProducer.NotiGetPrivateKey()
+	err = svc.authRabbitmqProducer.NotiGetPrivateKey()
 	if err != nil {
 		log.Fatalf("Cannot send noti to auth server: %v\n", err)
 	}

@@ -8,24 +8,24 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type AuthRabbitMQProducer interface {
+type AuthRabbitmqProducer interface {
 	NotiGetPrivateKey() error
 }
 
-type authRabbitMQProducerImpl struct{}
+type authRabbitmqProducerImpl struct{}
 
-func NewAuthRabbitMQProducer() AuthRabbitMQProducer {
-	return &authRabbitMQProducerImpl{}
+func NewAuthRabbitmqProducer() AuthRabbitmqProducer {
+	return &authRabbitmqProducerImpl{}
 }
 
-func (p *authRabbitMQProducerImpl) NotiGetPrivateKey() error {
+func (p *authRabbitmqProducerImpl) NotiGetPrivateKey() error {
 	// Connect
 	amqpConnectionStr := fmt.Sprintf("amqp://%s:%s@message-broker:5672",
 		os.Getenv("MESSAGE_BROKER_USER"),
 		os.Getenv("MESSAGE_BROKER_PASSWORD"))
 	conn, err := amqp.Dial(amqpConnectionStr)
 	if err != nil {
-		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
+		log.Fatalf("Failed to connect to Rabbitmq: %v", err)
 		return err
 	}
 	defer conn.Close()
