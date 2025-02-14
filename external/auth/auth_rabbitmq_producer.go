@@ -9,7 +9,7 @@ import (
 )
 
 type AuthRabbitMQProducer interface {
-	NotiGetPrivateKey()
+	NotiGetPrivateKey() error
 }
 
 type authRabbitMQProducerImpl struct{}
@@ -18,7 +18,7 @@ func NewAuthRabbitMQProducer() AuthRabbitMQProducer {
 	return &authRabbitMQProducerImpl{}
 }
 
-func (p *authRabbitMQProducerImpl) NotiGetPrivateKey() {
+func (p *authRabbitMQProducerImpl) NotiGetPrivateKey() error {
 	// Connect
 	amqpConnectionStr := fmt.Sprintf("amqp://%s:%s@message-broker:5672",
 		os.Getenv("MESSAGE_BROKER_USER"),
@@ -26,6 +26,7 @@ func (p *authRabbitMQProducerImpl) NotiGetPrivateKey() {
 	conn, err := amqp.Dial(amqpConnectionStr)
 	if err != nil {
 		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
+		return err
 	}
 	defer conn.Close()
 
@@ -33,6 +34,7 @@ func (p *authRabbitMQProducerImpl) NotiGetPrivateKey() {
 	ch, err := conn.Channel()
 	if err != nil {
 		log.Fatalf("Failed to open channel: %v", err)
+		return err
 	}
 	defer ch.Close()
 
@@ -68,5 +70,6 @@ func (p *authRabbitMQProducerImpl) NotiGetPrivateKey() {
 	}
 
 	log.Printf("Published message: %s", body)
+	return nil
 
 }

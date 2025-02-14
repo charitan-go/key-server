@@ -1,75 +1,78 @@
 package service
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
 	"log"
 
 	"github.com/charitan-go/key-server/external/auth"
 	"github.com/charitan-go/key-server/pkg/proto"
-	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type KeyService interface {
-	NotiGetPrivateKey()
-	GetPrivateKey(*proto.GetPrivateKeyRequestDto) (*proto.GetPrivateKeyResponseDto, error)
+	getPrivateKeyStr() string
+
+	GenerateKeyPairs() error
+
+	// GRPC Listener
+	GetPrivateKeyGrpcHandler(*proto.GetPrivateKeyRequestDto) (*proto.GetPrivateKeyResponseDto, error)
 }
 
 type keyServiceImpl struct {
+	privateKey           *rsa.PrivateKey
+	publicKey            *rsa.PublicKey
 	authRabbitMQProducer auth.AuthRabbitMQProducer
 }
 
 func NewKeyService(authRabbitMQProducer auth.AuthRabbitMQProducer) KeyService {
-	return &keyServiceImpl{authRabbitMQProducer}
+	return &keyServiceImpl{nil, nil, authRabbitMQProducer}
 }
 
-func (svc *keyServiceImpl) GetPrivateKey(reqDto *proto.GetPrivateKeyRequestDto) (*proto.GetPrivateKeyResponseDto, error) {
-	return nil, nil
+func (svc *keyServiceImpl) getPrivateKeyStr() string {
+	// Convert the RSA private key to DER-encoded PKCS#1 format
+	privateKeyDER := x509.MarshalPKCS1PrivateKey(svc.privateKey)
+
+	// Create a PEM block with the DER-encoded key
+	pemBlock := &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: privateKeyDER,
+	}
+
+	// Encode the PEM block to a []byte
+	privateKeyPEM := pem.EncodeToMemory(pemBlock)
+
+	// Convert the PEM []byte to a string
+	privateKeyString := string(privateKeyPEM)
+	return privateKeyString
 }
 
-func (svc *keyServiceImpl) NotiGetPrivateKey() {
-	// Connect to RabbitMQ
-	conn, err := amqp.Dial("amqp://rabbitmq:secret@message-broker:5672/")
+func (svc *keyServiceImpl) GenerateKeyPairs() error {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		log.Fatalf("Failed to connect to RabbitMQ %v", err)
-	}
-	defer conn.Close()
-
-	ch, err := conn.Channel()
-	if err != nil {
-		log.Fatalf("Failed to open a channel %v", err)
-	}
-	defer ch.Close()
-
-	// Declare a topic exchange (will create it if it doesn't exist)
-	exchangeName := "AUTH_NOTI_GET_PRIVATE_KEY"
-	err = ch.ExchangeDeclare(
-		exchangeName, // name
-		"topic",      // type
-		true,         // durable
-		false,        // auto-deleted
-		false,        // internal
-		false,        // no-wait
-		nil,          // arguments
-	)
-	if err != nil {
-		log.Fatalf("Failed to declare an exchange %v", err)
+		log.Fatalf("Cannot generate private key: %v\n", err)
+		return err
 	}
 
-	// Publish a message indicating the key generation is complete
-	routingKey := "key.generated"
-	body := "Key generation completed: key version 1"
-	err = ch.Publish(
-		exchangeName, // exchange
-		routingKey,   // routing key
-		false,        // mandatory
-		false,        // immediate
-		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(body),
-		})
+	// Store both keys
+	svc.privateKey = privateKey
+	svc.publicKey = &privateKey.PublicKey
+
+	// Send noti to auth server for get key pairs
+	err = svc.authRabbitMQProducer.NotiGetPrivateKey()
 	if err != nil {
-		log.Fatalf("Failed to declare an exchange %v", err)
+		log.Fatalf("Cannot send noti to auth server: %v\n", err)
 	}
 
-	log.Printf("Published message: %s", body)
+	return nil
+}
 
+func (svc *keyServiceImpl) GetPrivateKeyGrpcHandler(*proto.GetPrivateKeyRequestDto) (*proto.GetPrivateKeyResponseDto, error) {
+	if svc.privateKey == nil {
+		return nil, fmt.Errorf("Private key not available")
+	}
+
+	return &proto.GetPrivateKeyResponseDto{PrivateKey: svc.getPrivateKeyStr()}, nil
 }
