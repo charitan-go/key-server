@@ -17,8 +17,9 @@ import (
 
 type GrpcServer struct {
 	proto.UnimplementedKeyGrpcServiceServer
-	keySvc     service.KeyService
 	grpcServer *grpc.Server
+
+	keySvc service.KeyService
 }
 
 func NewGrpcServer(keySvc service.KeyService) *GrpcServer {
@@ -30,9 +31,15 @@ func NewGrpcServer(keySvc service.KeyService) *GrpcServer {
 	keyGrpcServer.grpcServer = grpcServer
 
 	// Init get key and gen key
+	err := keySvc.GenerateKeyPairs()
+	if err != nil {
+		log.Fatalf("Generate key pairs failed: %v", err)
+	}
 
 	address := os.Getenv("SERVICE_ID")
 	grpcServiceName := fmt.Sprintf("%s-grpc", address)
+
+	// Setup health server
 	healthServer := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
 	healthServer.SetServingStatus(grpcServiceName, grpc_health_v1.HealthCheckResponse_SERVING)
@@ -75,14 +82,6 @@ func (*GrpcServer) setupServiceRegistry() {
 	}
 }
 
-func (s *GrpcServer) GetPrivateKey(
-	ctx context.Context,
-	reqDto *proto.GetPrivateKeyRequestDto,
-) (*proto.GetPrivateKeyResponseDto, error) {
-	resDto, err := s.keySvc.GetPrivateKey(reqDto)
-	return resDto, err
-}
-
 func (s *GrpcServer) Run() {
 	s.setupServiceRegistry()
 	log.Println("Setup service registry for grpc service ok")
@@ -91,8 +90,22 @@ func (s *GrpcServer) Run() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+
 	log.Println("GRPC server listening on :50051")
+
 	if err := s.grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
+
+	// Generate key pairs
+	s.keySvc.GenerateKeyPairs()
+
+}
+
+func (s *GrpcServer) GetPrivateKey(
+	ctx context.Context,
+	reqDto *proto.GetPrivateKeyRequestDto,
+) (*proto.GetPrivateKeyResponseDto, error) {
+	resDto, err := s.keySvc.GetPrivateKeyGrpcHandler(reqDto)
+	return resDto, err
 }
