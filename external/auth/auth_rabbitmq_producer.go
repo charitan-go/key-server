@@ -47,5 +47,7 @@ func (p *authRabbitmqProducerImpl) NotiGetPrivateKey() error {
 		log.Printf("Published message: %s", body)
 	}
 
+	defer ch.Close()
+
 	return nil
 }
