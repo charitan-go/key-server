@@ -6,6 +6,7 @@ import (
 	"github.com/charitan-go/key-server/external/auth"
 	"github.com/charitan-go/key-server/grpc"
 	"github.com/charitan-go/key-server/internal/key"
+	"github.com/charitan-go/key-server/rabbitmq"
 	"github.com/charitan-go/key-server/rotation"
 	"go.uber.org/fx"
 )
@@ -32,10 +33,9 @@ func Run() {
 	fx.New(
 		key.KeyModule,
 		auth.AuthModule,
-		fx.Provide(
-			grpc.NewGrpcServer,
-			rotation.NewRotationServer,
-		),
+		rabbitmq.RabbitmqModule,
+		grpc.GrpcModule,
+		rotation.RotationModule,
 		fx.Invoke(runServers),
 	).Run()
 }
