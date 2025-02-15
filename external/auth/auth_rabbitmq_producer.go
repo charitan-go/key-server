@@ -21,6 +21,7 @@ func NewAuthRabbitmqProducer(rabbitmqSvc rabbitmq.RabbitmqService) AuthRabbitmqP
 
 func (p *authRabbitmqProducerImpl) NotiGetPrivateKey() error {
 	ch, err := p.rabbitmqSvc.ConnectRabbitmq()
+	defer ch.Close()
 	if err != nil {
 		log.Fatalf("Failed to open channel")
 	}
@@ -46,8 +47,6 @@ func (p *authRabbitmqProducerImpl) NotiGetPrivateKey() error {
 	} else {
 		log.Printf("Published message: %s", body)
 	}
-
-	defer ch.Close()
 
 	return nil
 }
