@@ -59,7 +59,7 @@ func (*rabbitmqServiceImpl) DeclareExchange(ch *amqp.Channel, exchangeName strin
 	)
 
 	if err != nil {
-		log.Fatalf("Declare exchange failed")
+		log.Fatalf("Declare exchange failed: %v\n", err)
 	}
 
 	return err
