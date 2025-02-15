@@ -81,7 +81,7 @@ func (s *GrpcServer) Run() {
 	log.Println("Setup service registry for grpc service ok")
 
 	// Generate key pairs
-	s.keySvc.GenerateKeyPairs()
+	// s.keySvc.GenerateKeyPairs()
 
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
