@@ -15,10 +15,9 @@ func NewRotationServer(keySvc service.KeyService) *RotationServer {
 }
 
 func (s *RotationServer) Run() {
-
+	time.Sleep(10 * time.Second)
 	for true {
-		time.Sleep(30 * time.Second)
-
 		s.keySvc.GenerateKeyPairs()
+		time.Sleep(2 * time.Minute)
 	}
 }
