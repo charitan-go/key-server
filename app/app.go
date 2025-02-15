@@ -3,6 +3,7 @@ package app
 import (
 	"log"
 
+	apigateway "github.com/charitan-go/key-server/external/api-gateway"
 	"github.com/charitan-go/key-server/external/auth"
 	"github.com/charitan-go/key-server/grpc"
 	"github.com/charitan-go/key-server/internal/key"
@@ -33,6 +34,7 @@ func Run() {
 	fx.New(
 		key.KeyModule,
 		auth.AuthModule,
+		apigateway.ApiGatewayModule,
 		rabbitmq.RabbitmqModule,
 		grpc.GrpcModule,
 		rotation.RotationModule,

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 
+	apigateway "github.com/charitan-go/key-server/external/api-gateway"
 	"github.com/charitan-go/key-server/external/auth"
 	"github.com/charitan-go/key-server/pkg/proto"
 )
@@ -22,13 +23,16 @@ type KeyService interface {
 }
 
 type keyServiceImpl struct {
-	privateKey           *rsa.PrivateKey
-	publicKey            *rsa.PublicKey
-	authRabbitmqProducer auth.AuthRabbitmqProducer
+	privateKey                 *rsa.PrivateKey
+	publicKey                  *rsa.PublicKey
+	authRabbitmqProducer       auth.AuthRabbitmqProducer
+	apiGatewayRabbitmqProducer apigateway.ApiGatewayRabbitmqProducer
 }
 
-func NewKeyService(authRabbitmqProducer auth.AuthRabbitmqProducer) KeyService {
-	return &keyServiceImpl{nil, nil, authRabbitmqProducer}
+func NewKeyService(
+	authRabbitmqProducer auth.AuthRabbitmqProducer,
+	apiGatewayRabbitmqProducer apigateway.ApiGatewayRabbitmqProducer) KeyService {
+	return &keyServiceImpl{nil, nil, authRabbitmqProducer, apiGatewayRabbitmqProducer}
 }
 
 func (svc *keyServiceImpl) getPrivateKeyStr() string {
@@ -66,6 +70,13 @@ func (svc *keyServiceImpl) GenerateKeyPairs() error {
 		log.Fatalf("Cannot send noti to auth server: %v\n", err)
 	} else {
 		log.Println("Send noti to auth server success")
+	}
+
+	err = svc.apiGatewayRabbitmqProducer.NotiGetPublicKey()
+	if err != nil {
+		log.Fatalf("Cannot send noti to api gateway: %v\n", err)
+	} else {
+		log.Println("Send noti to api gateway success")
 	}
 
 	return nil
