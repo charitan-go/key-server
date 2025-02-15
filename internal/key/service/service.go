@@ -64,6 +64,8 @@ func (svc *keyServiceImpl) GenerateKeyPairs() error {
 	err = svc.authRabbitmqProducer.NotiGetPrivateKey()
 	if err != nil {
 		log.Fatalf("Cannot send noti to auth server: %v\n", err)
+	} else {
+		log.Println("Send noti to auth server success")
 	}
 
 	return nil

@@ -30,12 +30,6 @@ func NewGrpcServer(keySvc service.KeyService) *GrpcServer {
 	keyGrpcServer.keySvc = keySvc
 	keyGrpcServer.grpcServer = grpcServer
 
-	// Init get key and gen key
-	err := keySvc.GenerateKeyPairs()
-	if err != nil {
-		log.Fatalf("Generate key pairs failed: %v", err)
-	}
-
 	address := os.Getenv("SERVICE_ID")
 	grpcServiceName := fmt.Sprintf("%s-grpc", address)
 
@@ -86,19 +80,18 @@ func (s *GrpcServer) Run() {
 	s.setupServiceRegistry()
 	log.Println("Setup service registry for grpc service ok")
 
+	// Generate key pairs
+	// s.keySvc.GenerateKeyPairs()
+
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	log.Println("GRPC server listening on :50051")
-
 	if err := s.grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-
-	// Generate key pairs
-	s.keySvc.GenerateKeyPairs()
 
 }
 

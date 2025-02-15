@@ -39,7 +39,7 @@ func (p *authRabbitmqProducerImpl) NotiGetPrivateKey() error {
 	defer ch.Close()
 
 	// Declare a topic exchange (will create it if it doesn't exist)
-	exchangeName := "AUTH_NOTI_GET_PRIVATE_KEY"
+	exchangeName := "GET_PRIVATE_KEY"
 	err = ch.ExchangeDeclare(
 		exchangeName, // name
 		"topic",      // type
@@ -54,8 +54,8 @@ func (p *authRabbitmqProducerImpl) NotiGetPrivateKey() error {
 	}
 
 	// Publish a message indicating the key generation is complete
-	routingKey := "key.generated"
-	body := "Key generation completed"
+	routingKey := "key.get.private.key"
+	body := "Private key generated successfully"
 	err = ch.Publish(
 		exchangeName, // exchange
 		routingKey,   // routing key
@@ -67,9 +67,10 @@ func (p *authRabbitmqProducerImpl) NotiGetPrivateKey() error {
 		})
 	if err != nil {
 		log.Fatalf("Failed to open channel: %v", err)
+	} else {
+		log.Printf("Published message: %s", body)
 	}
 
-	log.Printf("Published message: %s", body)
 	return nil
 
 }
