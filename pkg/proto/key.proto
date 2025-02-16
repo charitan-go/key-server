@@ -4,6 +4,7 @@ option go_package = "./pkg/proto";
 
 service KeyGrpcService {
     rpc GetPrivateKey(GetPrivateKeyRequestDto) returns (GetPrivateKeyResponseDto);
+    rpc GetPublicKey(GetPublicKeyRequestDto) returns (GetPublicKeyResponseDto);
 }
 
 message GetPrivateKeyRequestDto {
@@ -11,4 +12,11 @@ message GetPrivateKeyRequestDto {
 
 message GetPrivateKeyResponseDto {
     string privateKey = 1;
+  }
+
+message GetPublicKeyRequestDto {
+  }
+
+message GetPublicKeyResponseDto {
+    string publicKey = 1;
   }
