@@ -99,7 +99,7 @@ func (s *GrpcServer) GetPrivateKey(
 	ctx context.Context,
 	reqDto *proto.GetPrivateKeyRequestDto,
 ) (*proto.GetPrivateKeyResponseDto, error) {
-	resDto, err := s.keySvc.HandleGetPublicKeyGrpc(reqDto)
+	resDto, err := s.keySvc.HandleGetPrivateKeyGrpc(reqDto)
 	return resDto, err
 }
 

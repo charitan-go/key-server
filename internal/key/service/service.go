@@ -19,7 +19,7 @@ type KeyService interface {
 	GenerateKeyPairs() error
 
 	// GRPC Listener
-	HandleGetPublicKeyGrpc(*proto.GetPrivateKeyRequestDto) (*proto.GetPrivateKeyResponseDto, error)
+	HandleGetPrivateKeyGrpc(*proto.GetPrivateKeyRequestDto) (*proto.GetPrivateKeyResponseDto, error)
 	HandleGetPublicKeyGrpc(*proto.GetPublicKeyRequestDto) (*proto.GetPublicKeyResponseDto, error)
 }
 
@@ -83,7 +83,7 @@ func (svc *keyServiceImpl) GenerateKeyPairs() error {
 	return nil
 }
 
-func (svc *keyServiceImpl) HandleGetPublicKeyGrpc(*proto.GetPrivateKeyRequestDto) (*proto.GetPrivateKeyResponseDto, error) {
+func (svc *keyServiceImpl) HandleGetPrivateKeyGrpc(*proto.GetPrivateKeyRequestDto) (*proto.GetPrivateKeyResponseDto, error) {
 	if svc.privateKey == nil {
 		return nil, fmt.Errorf("Private key not available")
 	}
