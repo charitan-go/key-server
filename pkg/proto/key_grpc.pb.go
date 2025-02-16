@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	KeyGrpcService_GetPrivateKey_FullMethodName = "/KeyGrpcService/GetPrivateKey"
+	KeyGrpcService_GetPublicKey_FullMethodName  = "/KeyGrpcService/GetPublicKey"
 )
 
 // KeyGrpcServiceClient is the client API for KeyGrpcService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type KeyGrpcServiceClient interface {
 	GetPrivateKey(ctx context.Context, in *GetPrivateKeyRequestDto, opts ...grpc.CallOption) (*GetPrivateKeyResponseDto, error)
+	GetPublicKey(ctx context.Context, in *GetPublicKeyRequestDto, opts ...grpc.CallOption) (*GetPublicKeyResponseDto, error)
 }
 
 type keyGrpcServiceClient struct {
@@ -47,11 +49,22 @@ func (c *keyGrpcServiceClient) GetPrivateKey(ctx context.Context, in *GetPrivate
 	return out, nil
 }
 
+func (c *keyGrpcServiceClient) GetPublicKey(ctx context.Context, in *GetPublicKeyRequestDto, opts ...grpc.CallOption) (*GetPublicKeyResponseDto, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPublicKeyResponseDto)
+	err := c.cc.Invoke(ctx, KeyGrpcService_GetPublicKey_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // KeyGrpcServiceServer is the server API for KeyGrpcService service.
 // All implementations must embed UnimplementedKeyGrpcServiceServer
 // for forward compatibility.
 type KeyGrpcServiceServer interface {
 	GetPrivateKey(context.Context, *GetPrivateKeyRequestDto) (*GetPrivateKeyResponseDto, error)
+	GetPublicKey(context.Context, *GetPublicKeyRequestDto) (*GetPublicKeyResponseDto, error)
 	mustEmbedUnimplementedKeyGrpcServiceServer()
 }
 
@@ -64,6 +77,9 @@ type UnimplementedKeyGrpcServiceServer struct{}
 
 func (UnimplementedKeyGrpcServiceServer) GetPrivateKey(context.Context, *GetPrivateKeyRequestDto) (*GetPrivateKeyResponseDto, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPrivateKey not implemented")
+}
+func (UnimplementedKeyGrpcServiceServer) GetPublicKey(context.Context, *GetPublicKeyRequestDto) (*GetPublicKeyResponseDto, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPublicKey not implemented")
 }
 func (UnimplementedKeyGrpcServiceServer) mustEmbedUnimplementedKeyGrpcServiceServer() {}
 func (UnimplementedKeyGrpcServiceServer) testEmbeddedByValue()                        {}
@@ -104,6 +120,24 @@ func _KeyGrpcService_GetPrivateKey_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KeyGrpcService_GetPublicKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPublicKeyRequestDto)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KeyGrpcServiceServer).GetPublicKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KeyGrpcService_GetPublicKey_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KeyGrpcServiceServer).GetPublicKey(ctx, req.(*GetPublicKeyRequestDto))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // KeyGrpcService_ServiceDesc is the grpc.ServiceDesc for KeyGrpcService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +148,10 @@ var KeyGrpcService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPrivateKey",
 			Handler:    _KeyGrpcService_GetPrivateKey_Handler,
+		},
+		{
+			MethodName: "GetPublicKey",
+			Handler:    _KeyGrpcService_GetPublicKey_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

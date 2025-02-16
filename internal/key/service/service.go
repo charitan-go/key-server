@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 
+	apigateway "github.com/charitan-go/key-server/external/api-gateway"
 	"github.com/charitan-go/key-server/external/auth"
 	"github.com/charitan-go/key-server/pkg/proto"
 )
@@ -18,17 +19,21 @@ type KeyService interface {
 	GenerateKeyPairs() error
 
 	// GRPC Listener
-	GetPrivateKeyGrpcHandler(*proto.GetPrivateKeyRequestDto) (*proto.GetPrivateKeyResponseDto, error)
+	HandleGetPrivateKeyGrpc(*proto.GetPrivateKeyRequestDto) (*proto.GetPrivateKeyResponseDto, error)
+	HandleGetPublicKeyGrpc(*proto.GetPublicKeyRequestDto) (*proto.GetPublicKeyResponseDto, error)
 }
 
 type keyServiceImpl struct {
-	privateKey           *rsa.PrivateKey
-	publicKey            *rsa.PublicKey
-	authRabbitmqProducer auth.AuthRabbitmqProducer
+	privateKey                 *rsa.PrivateKey
+	publicKey                  *rsa.PublicKey
+	authRabbitmqProducer       auth.AuthRabbitmqProducer
+	apiGatewayRabbitmqProducer apigateway.ApiGatewayRabbitmqProducer
 }
 
-func NewKeyService(authRabbitmqProducer auth.AuthRabbitmqProducer) KeyService {
-	return &keyServiceImpl{nil, nil, authRabbitmqProducer}
+func NewKeyService(
+	authRabbitmqProducer auth.AuthRabbitmqProducer,
+	apiGatewayRabbitmqProducer apigateway.ApiGatewayRabbitmqProducer) KeyService {
+	return &keyServiceImpl{nil, nil, authRabbitmqProducer, apiGatewayRabbitmqProducer}
 }
 
 func (svc *keyServiceImpl) getPrivateKeyStr() string {
@@ -47,6 +52,20 @@ func (svc *keyServiceImpl) getPrivateKeyStr() string {
 	// Convert the PEM []byte to a string
 	privateKeyString := string(privateKeyPEM)
 	return privateKeyString
+}
+
+func (svc *keyServiceImpl) getPublicKeyStr() string {
+	// Marshal the public key to DER-encoded PKIX format.
+	derBytes, _ := x509.MarshalPKIXPublicKey(svc.publicKey)
+
+	// Create a PEM block with type "PUBLIC KEY".
+	block := &pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: derBytes,
+	}
+
+	// Encode the PEM block to a memory buffer and return it as a string.
+	return string(pem.EncodeToMemory(block))
 }
 
 func (svc *keyServiceImpl) GenerateKeyPairs() error {
@@ -68,13 +87,28 @@ func (svc *keyServiceImpl) GenerateKeyPairs() error {
 		log.Println("Send noti to auth server success")
 	}
 
+	err = svc.apiGatewayRabbitmqProducer.NotiGetPublicKey()
+	if err != nil {
+		log.Fatalf("Cannot send noti to api gateway: %v\n", err)
+	} else {
+		log.Println("Send noti to api gateway success")
+	}
+
 	return nil
 }
 
-func (svc *keyServiceImpl) GetPrivateKeyGrpcHandler(*proto.GetPrivateKeyRequestDto) (*proto.GetPrivateKeyResponseDto, error) {
+func (svc *keyServiceImpl) HandleGetPrivateKeyGrpc(*proto.GetPrivateKeyRequestDto) (*proto.GetPrivateKeyResponseDto, error) {
 	if svc.privateKey == nil {
 		return nil, fmt.Errorf("Private key not available")
 	}
 
 	return &proto.GetPrivateKeyResponseDto{PrivateKey: svc.getPrivateKeyStr()}, nil
+}
+
+func (svc *keyServiceImpl) HandleGetPublicKeyGrpc(*proto.GetPublicKeyRequestDto) (*proto.GetPublicKeyResponseDto, error) {
+	if svc.publicKey == nil {
+		return nil, fmt.Errorf("Public key not available")
+	}
+
+	return &proto.GetPublicKeyResponseDto{PublicKey: svc.getPublicKeyStr()}, nil
 }
