@@ -54,6 +54,20 @@ func (svc *keyServiceImpl) getPrivateKeyStr() string {
 	return privateKeyString
 }
 
+func (svc *keyServiceImpl) getPublicKeyStr() string {
+	// Marshal the public key to DER-encoded PKIX format.
+	derBytes, _ := x509.MarshalPKIXPublicKey(svc.publicKey)
+
+	// Create a PEM block with type "PUBLIC KEY".
+	block := &pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: derBytes,
+	}
+
+	// Encode the PEM block to a memory buffer and return it as a string.
+	return string(pem.EncodeToMemory(block))
+}
+
 func (svc *keyServiceImpl) GenerateKeyPairs() error {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
@@ -96,5 +110,5 @@ func (svc *keyServiceImpl) HandleGetPublicKeyGrpc(*proto.GetPublicKeyRequestDto)
 		return nil, fmt.Errorf("Public key not available")
 	}
 
-	return &proto.GetPublicKeyResponseDto{PublicKey: svc.getPrivateKeyStr()}, nil
+	return &proto.GetPublicKeyResponseDto{PublicKey: svc.getPublicKeyStr()}, nil
 }
